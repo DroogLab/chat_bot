@@ -1,0 +1,13 @@
+streamlit
+lancedb
+sentence-transformers
+langchain
+langchain-groq
+docling
+pandas
+numpy
+langchain-core
+langchain-community
+python-docx
+pypdf2
+altair

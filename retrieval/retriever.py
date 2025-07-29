@@ -1,0 +1,48 @@
+import lancedb
+from embeddings.embedder import embed_chunks
+import pandas as pd
+
+class Retriever:
+    def __init__(self, db_path, table_name, embedding_model):
+        self.table = lancedb.connect(db_path).open_table(table_name)
+        self.embedding_model = embedding_model
+
+    def embed_query(self, query):
+        return embed_chunks([query], model_name=self.embedding_model)[0]
+
+    def search_dense(self, query_vector, k=10):
+        return self.table.search(query_vector).limit(k).to_pandas()
+
+    def search_sparse(self, query, k=10):
+        return self.table.search(query, query_type="fts").limit(k).to_pandas()
+
+    def reciprocal_rank_fusion(self, dense_df, sparse_df, k=60, limit=5):
+        vector_ranks = {row['text']: i+1 for i, (_, row) in enumerate(dense_df.iterrows())}
+        fts_ranks = {row['text']: i+1 for i, (_, row) in enumerate(sparse_df.iterrows())}
+        all_texts = set(vector_ranks) | set(fts_ranks)
+        scores = {}
+        for text in all_texts:
+            score = 0
+            if text in vector_ranks: score += 1 / (k + vector_ranks[text])
+            if text in fts_ranks: score += 1 / (k + fts_ranks[text])
+            scores[text] = score
+        sorted_texts = sorted(scores, key=scores.get, reverse=True)[:limit]
+        final = []
+        for text in sorted_texts:
+            src = 'both' if text in vector_ranks and text in fts_ranks else ('vector' if text in vector_ranks else 'fts')
+            final.append({'text': text, 'final_score': scores[text], 'search_source': src})
+        return pd.DataFrame(final)
+
+    def retrieve(self, query, mode="hybrid", k=5):
+        qvec = self.embed_query(query)
+        dense = self.search_dense(qvec, k=10)
+        sparse = self.search_sparse(query, k=10)
+        if mode == "dense":
+            results = dense.head(k)
+            results = results.rename(columns={"score": "final_score"})
+        elif mode == "sparse":
+            results = sparse.head(k)
+            results = results.rename(columns={"score": "final_score"})
+        else:  # hybrid
+            results = self.reciprocal_rank_fusion(dense, sparse, k=60, limit=k)
+        return results[["text", "final_score", "search_source"]]
