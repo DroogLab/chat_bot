@@ -1,7 +1,7 @@
 import lancedb
 from embeddings.embedder import embed_chunks
 import pandas as pd
-
+import time 
 class Retriever:
     def __init__(self, db_path, table_name, embedding_model):
         self.table = lancedb.connect(db_path).open_table(table_name)
@@ -33,7 +33,7 @@ class Retriever:
             final.append({'text': text, 'final_score': scores[text], 'search_source': src})
         return pd.DataFrame(final)
 
-    def retrieve(self, query, mode="hybrid", k=5):
+    """ def retrieve(self, query, mode="hybrid", k=5):
         qvec = self.embed_query(query)
         dense = self.search_dense(qvec, k=10)
         sparse = self.search_sparse(query, k=10)
@@ -45,4 +45,32 @@ class Retriever:
             results = results.rename(columns={"score": "final_score"})
         else:  # hybrid
             results = self.reciprocal_rank_fusion(dense, sparse, k=60, limit=k)
-        return results[["text", "final_score", "search_source"]]
+        return results[["text", "final_score", "search_source"]] """
+
+    def retrieve(self, query, mode="hybrid", k=10):
+        timings = {}
+
+        start = time.perf_counter()
+        qvec = self.embed_query(query)
+        end=time.perf_counter()
+        timings["embedding_time"] = end - start
+
+        start = time.perf_counter()
+        dense = self.search_dense(qvec, k=10)
+        timings["dense_search_time"] = time.perf_counter() - start
+
+        start = time.perf_counter()
+        sparse = self.search_sparse(query, k=10)
+        timings["sparse_search_time"] = time.perf_counter() - start
+
+        start = time.perf_counter()
+        if mode == "dense":
+            results = dense.head(k).rename(columns={"score": "final_score"})
+        elif mode == "sparse":
+            results = sparse.head(k).rename(columns={"score": "final_score"})
+        else:
+            results = self.reciprocal_rank_fusion(dense, sparse, k=60, limit=k)
+        timings["fusion_time"] = time.perf_counter() - start
+
+        # Return both results and timings
+        return results[["text", "final_score", "search_source"]], timings
