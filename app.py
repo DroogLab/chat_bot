@@ -6,6 +6,12 @@ from config import GROQ_API_KEY, EMBEDDING_MODEL_NAME, LANCEDB_PATH, LANCEDB_TAB
 from db.ingestor import Ingestor
 from retrieval.retriever import Retriever
 from llm.conversational import get_conversational_answer
+import os
+from dotenv import load_dotenv
+
+load_dotenv()  
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 # Page configuration
 st.set_page_config(page_title="Hybrid RAG Chatbot", layout="centered")
