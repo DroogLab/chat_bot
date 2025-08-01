@@ -14,7 +14,9 @@ DATA_DIR = "rag_chatbot/data"
 
 # GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
+#GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
+
+
 
 
 # below function is to tackle the inappropriate file name like DC 2.pdf (inbetween there is a space, which is replaced with _ )
@@ -30,7 +32,7 @@ def get_existing_tables(db_path):
 # <--- Initialization --->
 os.makedirs(DATA_DIR, exist_ok=True)
 load_dotenv()
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 st.set_page_config(page_title="Hybrid RAG Chatbot", layout="centered")
 st.markdown("<h1 style='text-align: center; color: #4B8BBE;'>Hybrid RAG Chatbot</h1>", unsafe_allow_html=True)
@@ -159,7 +161,7 @@ if (
             # --- Generation ---
             gen_start = time.perf_counter()
             with st.spinner(" Generating response..."):
-                answer = get_conversational_answer(top_texts, user_input, GROQ_API_KEY)
+                answer = get_conversational_answer(top_texts, user_input, OPENAI_API_KEY)
             gen_end = time.perf_counter()
             query_times["generation_time"] = (gen_end - gen_start)
 
