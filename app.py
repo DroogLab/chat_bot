@@ -34,6 +34,7 @@ os.makedirs(DATA_DIR, exist_ok=True)
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
+
 st.set_page_config(page_title="Hybrid RAG Chatbot", layout="centered")
 st.markdown("<h1 style='text-align: center; color: #4B8BBE;'>Hybrid RAG Chatbot</h1>", unsafe_allow_html=True)
 st.caption("Ask questions based on your document using Hybrid Search + LLM")

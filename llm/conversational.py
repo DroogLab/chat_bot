@@ -1,8 +1,8 @@
 from langchain.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI  
+
 from dotenv import load_dotenv
 import os
-
 
 def get_conversational_answer(top_texts, query, openai_api_key):
     template = (
