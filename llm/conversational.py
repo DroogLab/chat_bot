@@ -1,7 +1,7 @@
 from langchain.prompts import PromptTemplate
-from langchain_groq import ChatGroq
+from langchain_openai import ChatOpenAI  
 
-def get_conversational_answer(top_texts, query, groq_api):
+def get_conversational_answer(top_texts, query, openai_api_key):
     template = (
         "You are an expert conversational AI assistant. "
         "Always respond to the user's question in a friendly, natural, and helpful manner, using the information provided in the context below. "
@@ -18,11 +18,14 @@ def get_conversational_answer(top_texts, query, groq_api):
     )
 
     formatted_prompt = prompt.format(context="\n\n".join(top_texts), question=query)
-    llm = ChatGroq(
-        model="llama3-70b-8192",
+
+    # ✅ OpenAI LLM setup
+    llm = ChatOpenAI(
+        model="gpt-3.5-turbo", 
         temperature=0.5,
         max_tokens=512,
-        api_key=groq_api,
+        api_key=openai_api_key
     )
+
     response = llm.invoke(formatted_prompt)
     return response.content

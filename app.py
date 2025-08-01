@@ -25,7 +25,7 @@ def get_existing_tables(db_path):
 # <--- Initialization --->
 os.makedirs(DATA_DIR, exist_ok=True)
 load_dotenv()
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 st.set_page_config(page_title="Hybrid RAG Chatbot", layout="centered")
 st.markdown("<h1 style='text-align: center; color: #4B8BBE;'>Hybrid RAG Chatbot</h1>", unsafe_allow_html=True)
 st.caption("Ask questions based on your document using Hybrid Search + LLM")
@@ -153,7 +153,7 @@ if (
             # --- Generation ---
             gen_start = time.perf_counter()
             with st.spinner(" Generating response..."):
-                answer = get_conversational_answer(top_texts, user_input, GROQ_API_KEY)
+                answer = get_conversational_answer(top_texts, user_input, OPENAI_API_KEY)
             gen_end = time.perf_counter()
             query_times["generation_time"] = (gen_end - gen_start)
 
