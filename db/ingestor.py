@@ -9,7 +9,19 @@ class Ingestor:
         self.db = lancedb.connect(db_path)
         self.table_name = table_name
 
-    def run(self, file_path):
+    def run(self, file_path, force_reindex=False):
+        """
+        Ingests the file as a LanceDB table if not already present.
+        If force_reindex=True, will re-create the table.
+        """
+        if self.table_name in self.db.table_names():
+            if not force_reindex:
+                print(f"Table '{self.table_name}' already exists. Skipping ingestion.")
+                return
+            else:
+                print(f"Table '{self.table_name}' exists. Dropping and re-ingesting...")
+                self.db.drop_table(self.table_name)
+
         print(f"Loading and chunking {file_path}...")
         text = load_text(file_path)
         chunks = chunk_text(text)
@@ -17,9 +29,6 @@ class Ingestor:
         dense_vectors = embed_chunks(chunks)
         df = pd.DataFrame({"text": chunks, "vector": list(dense_vectors)})
 
-        if self.table_name in self.db.table_names():
-            print("Table exists. Dropping old table...")
-            self.db.drop_table(self.table_name)
         table = self.db.create_table(self.table_name, data=df)
         table.create_fts_index("text")
         table.wait_for_index(["text_idx"])
