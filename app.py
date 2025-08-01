@@ -3,7 +3,7 @@ import os
 import time
 import pandas as pd
 import re
-from config import GROQ_API_KEY, EMBEDDING_MODEL_NAME, LANCEDB_PATH
+from config import GROQ_API_KEY, OPENAI_API_KEY, EMBEDDING_MODEL_NAME, LANCEDB_PATH, validate_api_keys
 from db.ingestor import Ingestor
 from retrieval.retriever import Retriever
 from llm.conversational import get_conversational_answer
@@ -12,12 +12,8 @@ import lancedb
 
 DATA_DIR = "rag_chatbot/data"
 
-# GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-
-#GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
-
-
-
+# Load environment variables for local development
+load_dotenv()
 
 # below function is to tackle the inappropriate file name like DC 2.pdf (inbetween there is a space, which is replaced with _ )
 def sanitize_table_name(name):
@@ -31,11 +27,14 @@ def get_existing_tables(db_path):
 
 # <--- Initialization --->
 os.makedirs(DATA_DIR, exist_ok=True)
-load_dotenv()
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 
 st.set_page_config(page_title="Hybrid RAG Chatbot", layout="centered")
+
+# Validate API keys before proceeding
+if not validate_api_keys():
+    st.stop()
+
 st.markdown("<h1 style='text-align: center; color: #4B8BBE;'>Hybrid RAG Chatbot</h1>", unsafe_allow_html=True)
 st.caption("Ask questions based on your document using Hybrid Search + LLM")
 
