@@ -34,7 +34,7 @@ class Retriever:
             final.append({'text': text, 'final_score': scores[text], 'search_source': src})
         return pd.DataFrame(final)
 
-    def retrieve(self, query, mode="hybrid", k=10):
+    def retrieve(self, query, mode, k_dense , k_sparse, rrf_k, top_k_final):
         timings = {}
 
         start = time.perf_counter()
@@ -43,16 +43,16 @@ class Retriever:
         timings["embedding_time"] = end - start
 
         start = time.perf_counter()
-        dense = self.search_dense(qvec, k=10)
+        dense = self.search_dense(qvec, k=k_dense)
         timings["dense_search_time"] = time.perf_counter() - start
 
         start = time.perf_counter()
-        sparse = self.search_sparse(query, k=10)
+        sparse = self.search_sparse(query, k=k_sparse)
         timings["sparse_search_time"] = time.perf_counter() - start
 
         start = time.perf_counter()
         if mode == "dense":
-            results = dense.head(k).copy()
+            results = dense.head(k_dense).copy()
             # Create final_score robustly
             if "score" in results.columns:
                 results = results.rename(columns={"score": "final_score"})
@@ -62,7 +62,7 @@ class Retriever:
                 results["final_score"] = None
             results["search_source"] = "vector"
         elif mode == "sparse":
-            results = sparse.head(k).copy()
+            results = sparse.head(k_sparse).copy()
             if "score" in results.columns:
                 results = results.rename(columns={"score": "final_score"})
             elif "distance" in results.columns:
@@ -71,7 +71,7 @@ class Retriever:
                 results["final_score"] = None
             results["search_source"] = "fts"
         else:
-            results = self.reciprocal_rank_fusion(dense, sparse, k=60, limit=k)
+            results = self.reciprocal_rank_fusion(dense, sparse, k=rrf_k, limit=top_k_final)
         timings["fusion_time"] = time.perf_counter() - start
 
         # Always ensure required columns exist
