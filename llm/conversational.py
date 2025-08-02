@@ -1,7 +1,12 @@
 from langchain.prompts import PromptTemplate
-from langchain_openai import ChatOpenAI  
+from langchain_openai import ChatOpenAI
+from dotenv import load_dotenv
+import os
 
-def get_conversational_answer(top_texts, query, openai_api_key):
+
+from langchain_groq import ChatGroq  #
+
+def get_conversational_answer(top_texts, query, model_type="openai"):
     template = (
         "You are an expert conversational AI assistant. "
         "Always respond to the user's question in a friendly, natural, and helpful manner, using the information provided in the context below. "
@@ -19,13 +24,21 @@ def get_conversational_answer(top_texts, query, openai_api_key):
 
     formatted_prompt = prompt.format(context="\n\n".join(top_texts), question=query)
 
-    # ✅ OpenAI LLM setup
-    llm = ChatOpenAI(
-        model="gpt-3.5-turbo", 
-        temperature=0.5,
-        max_tokens=512,
-        api_key=openai_api_key
-    )
+    # Choose LLM
+    if model_type == "openai":
+        llm = ChatOpenAI(
+            model="gpt-3.5-turbo",
+            temperature=0.5,
+            max_tokens=512,
+            api_key=os.getenv("OPENAI_API_KEY")
+        )
+    elif model_type == "groq":
+        llm = ChatGroq(  
+            model="llama-3.3-70b-versatile",  
+            api_key=os.getenv("GROQ_API_KEY")
+        )
+    else:
+        raise ValueError("Invalid model type")
 
     response = llm.invoke(formatted_prompt)
     return response.content
